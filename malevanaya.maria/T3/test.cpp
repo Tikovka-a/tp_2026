@@ -154,24 +154,33 @@ void testCommandOutputs()
         polys.push_back(p);
     }
     assert(polys.size() == 4);
-
-    const auto cntOdd = std::count_if(polys.begin(), polys.end(), 
-        [](const Polygon& p) { return p.points.size() % 2 != 0; });
-    const auto cntEven = std::count_if(polys.begin(), polys.end(), 
-        [](const Polygon& p) { return p.points.size() % 2 == 0; });
+    const auto cntOdd = std::count_if(polys.begin(), polys.end(),
+        [](const Polygon& p) {
+            return p.points.size() % 2 != 0;
+        });
+    const auto cntEven = std::count_if(polys.begin(), polys.end(),
+        [](const Polygon& p) {
+            return p.points.size() % 2 == 0;
+        });
     assert(cntOdd == 3);
     assert(cntEven == 1);
 
-    const auto cnt3 = std::count_if(polys.begin(), polys.end(), 
-        [](const Polygon& p) { return p.points.size() == 3; });
+    const auto cnt3 = std::count_if(polys.begin(), polys.end(),
+        [](const Polygon& p) {
+            return p.points.size() == 3;
+        });
     assert(cnt3 == 2);
 
-    const auto itMax = std::max_element(polys.begin(), polys.end(), 
-        [](const Polygon& a, const Polygon& b) { return a.points.size() < b.points.size(); });
+    const auto itMax = std::max_element(polys.begin(), polys.end(),
+        [](const Polygon& a, const Polygon& b) {
+            return a.points.size() < b.points.size();
+        });
     assert(itMax->points.size() == 5);
 
-    const auto itMin = std::min_element(polys.begin(), polys.end(), 
-        [](const Polygon& a, const Polygon& b) { return a.points.size() < b.points.size(); });
+    const auto itMin = std::min_element(polys.begin(), polys.end(),
+        [](const Polygon& a, const Polygon& b) {
+            return a.points.size() < b.points.size();
+        });
     assert(itMin->points.size() == 3);
 
     std::cout << "[pass] testCommandOutputs\n";
