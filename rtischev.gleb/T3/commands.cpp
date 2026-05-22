@@ -188,4 +188,54 @@ namespace Commands
         }
         out << count << '\n';
     }
+
+    // LESSAREA
+    void cmd_LESSAREA(const std::vector<Polygon> &polygons, std::istream &in, std::ostream &out)
+    {
+        Polygon target;
+        if (!(in >> target))
+        {
+            throw std::runtime_error("Invalid polygon for LESSAREA");
+        }
+
+        double target_area = Geometry::get_area(target);
+        long long count = std::count_if(polygons.begin(), polygons.end(),
+                                        [target_area](const Polygon &p)
+                                        {
+                                            return Geometry::get_area(p) < target_area;
+                                        });
+
+        out << count << '\n';
+    }
+
+    // MAXSEQ
+    void cmd_MAXSEQ(const std::vector<Polygon> &polygons, std::istream &in, std::ostream &out)
+    {
+        Polygon target;
+        if (!(in >> target))
+        {
+            throw std::runtime_error("Invalid polygon for MAXSEQ");
+        }
+
+        long long max_seq = 0;
+        long long current_seq = 0;
+
+        for (const auto &p : polygons)
+        {
+            if (p == target)
+            {
+                current_seq++;
+                if (current_seq > max_seq)
+                {
+                    max_seq = current_seq;
+                }
+            }
+            else
+            {
+                current_seq = 0;
+            }
+        }
+
+        out << max_seq << '\n';
+    }
 }
