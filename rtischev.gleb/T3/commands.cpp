@@ -26,8 +26,7 @@ namespace Commands
         {
             if (polygons.empty())
             {
-                out << 0.0 << '\n';
-                return;
+                throw std::runtime_error("Empty dataset for AREA MEAN");
             }
             double total_area = std::accumulate(polygons.begin(), polygons.end(), 0.0,
                                                 [](double acc, const Polygon &p)
@@ -42,7 +41,8 @@ namespace Commands
             double sum = std::accumulate(polygons.cbegin(), polygons.cend(), 0.0,
                                          [&index, target_even](double acc, const Polygon &p)
                                          {
-                                             bool is_target_index = ((index % 2 == 0) == target_even);
+                                             bool is_even_index = (index % 2 != 0);
+                                             bool is_target_index = (is_even_index == target_even);
                                              index++;
                                              return acc + (is_target_index ? Geometry::get_area(p) : 0.0);
                                          });
@@ -50,7 +50,25 @@ namespace Commands
         }
         else
         {
-            throw std::runtime_error("Unknown sub-command for AREA");
+            try
+            {
+                size_t num_vertices = std::stoul(sub_cmd);
+                if (num_vertices < 3)
+                {
+                    throw std::runtime_error("Invalid vertex count");
+                }
+
+                double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
+                                             [num_vertices](double acc, const Polygon &p)
+                                             {
+                                                 return acc + (p.points.size() == num_vertices ? Geometry::get_area(p) : 0.0);
+                                             });
+                out << sum << '\n';
+            }
+            catch (...)
+            {
+                throw std::runtime_error("Unknown sub-command for AREA");
+            }
         }
     }
 
@@ -77,7 +95,7 @@ namespace Commands
             iofmtguard guard(out);
             out << std::fixed << std::setprecision(1) << Geometry::get_area(*it) << '\n';
         }
-        else if (sub_cmd == "VERTICES")
+        else if (sub_cmd == "VERTEXES")
         {
             auto it = std::max_element(polygons.begin(), polygons.end(),
                                        [](const Polygon &a, const Polygon &b)
@@ -114,7 +132,7 @@ namespace Commands
             iofmtguard guard(out);
             out << std::fixed << std::setprecision(1) << Geometry::get_area(*it) << '\n';
         }
-        else if (sub_cmd == "VERTICES")
+        else if (sub_cmd == "VERTEXES")
         {
             auto it = std::min_element(polygons.begin(), polygons.end(),
                                        [](const Polygon &a, const Polygon &b)
@@ -155,6 +173,10 @@ namespace Commands
             try
             {
                 size_t num_vertices = std::stoul(arg);
+                if (num_vertices < 3)
+                {
+                    throw std::runtime_error("Invalid vertex count");
+                }
                 count = std::count_if(polygons.begin(), polygons.end(),
                                       [num_vertices](const Polygon &p)
                                       { return p.points.size() == num_vertices; });
@@ -165,50 +187,5 @@ namespace Commands
             }
         }
         out << count << '\n';
-    }
-
-    // для вар 2: LESSAREA
-    void cmd_LESSAREA(const std::vector<Polygon> &polygons, std::istream &in, std::ostream &out)
-    {
-        Polygon target;
-        if (!(in >> target))
-        {
-            throw std::runtime_error("Invalid argument for LESSAREA");
-        }
-
-        double targetArea = Geometry::get_area(target);
-        auto count = std::count_if(polygons.begin(), polygons.end(),
-                                   [targetArea](const Polygon &p)
-                                   { return Geometry::get_area(p) < targetArea; });
-
-        out << count << '\n';
-    }
-
-    // для вар 2: MAXSEQ
-    void cmd_MAXSEQ(const std::vector<Polygon> &polygons, std::istream &in, std::ostream &out)
-    {
-        Polygon target;
-        if (!(in >> target))
-        {
-            throw std::runtime_error("Invalid argument for MAXSEQ");
-        }
-
-        std::pair<int, int> start = {0, 0};
-        auto result = std::accumulate(polygons.begin(), polygons.end(), start,
-                                      [&target](std::pair<int, int> state, const Polygon &current)
-                                      {
-                                          if (current == target)
-                                          {
-                                              state.first += 1;
-                                              state.second = std::max(state.second, state.first);
-                                          }
-                                          else
-                                          {
-                                              state.first = 0;
-                                          }
-                                          return state;
-                                      });
-
-        out << result.second << '\n';
     }
 }

@@ -41,27 +41,44 @@ int main(int argc, char *argv[])
     std::vector<Polygon> polygons;
     load_from_file(argv[1], polygons);
 
-    std::map<std::string, std::function<void()>> cmds;
+    std::map<std::string, std::function<void(std::istream &)>> cmds;
 
-    cmds["AREA"] = std::bind(Commands::cmd_AREA, std::cref(polygons), std::ref(std::cin), std::ref(std::cout));
-    cmds["MAX"] = std::bind(Commands::cmd_MAX, std::cref(polygons), std::ref(std::cin), std::ref(std::cout));
-    cmds["MIN"] = std::bind(Commands::cmd_MIN, std::cref(polygons), std::ref(std::cin), std::ref(std::cout));
-    cmds["COUNT"] = std::bind(Commands::cmd_COUNT, std::cref(polygons), std::ref(std::cin), std::ref(std::cout));
-    cmds["LESSAREA"] = std::bind(Commands::cmd_LESSAREA, std::cref(polygons), std::ref(std::cin), std::ref(std::cout));
-    cmds["MAXSEQ"] = std::bind(Commands::cmd_MAXSEQ, std::cref(polygons), std::ref(std::cin), std::ref(std::cout));
+    cmds["AREA"] = std::bind(Commands::cmd_AREA, std::cref(polygons), std::placeholders::_1, std::ref(std::cout));
+    cmds["MAX"] = std::bind(Commands::cmd_MAX, std::cref(polygons), std::placeholders::_1, std::ref(std::cout));
+    cmds["MIN"] = std::bind(Commands::cmd_MIN, std::cref(polygons), std::placeholders::_1, std::ref(std::cout));
+    cmds["COUNT"] = std::bind(Commands::cmd_COUNT, std::cref(polygons), std::placeholders::_1, std::ref(std::cout));
+    cmds["LESSAREA"] = std::bind(Commands::cmd_LESSAREA, std::cref(polygons), std::placeholders::_1, std::ref(std::cout));
+    cmds["MAXSEQ"] = std::bind(Commands::cmd_MAXSEQ, std::cref(polygons), std::placeholders::_1, std::ref(std::cout));
 
-    std::string command;
-    while (std::cin >> command)
+    std::string line;
+    while (std::getline(std::cin, line))
     {
+        if (line.empty())
+        {
+            continue;
+        }
+
+        std::stringstream ss(line);
+        std::string command;
+
+        if (!(ss >> command))
+        {
+            continue;
+        }
+
         try
         {
-            cmds.at(command)();
+            cmds.at(command)(ss);
+
+            std::string extra;
+            if (ss >> extra)
+            {
+                throw std::runtime_error("Too many arguments");
+            }
         }
         catch (const std::exception &e)
         {
-            std::cout << "<INVALID COMMAND>" << std::endl;
-            std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cout << "<INVALID COMMAND>\n";
         }
     }
 
