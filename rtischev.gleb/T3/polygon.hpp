@@ -4,16 +4,18 @@
 #include <vector>
 #include <iostream>
 
-struct Point {
+struct Point
+{
     int x, y;
 };
 
-struct Polygon {
+struct Polygon
+{
     std::vector<Point> points;
 };
 
-bool operator==(const Polygon& lhs, const Polygon& rhs);
-std::istream& operator>>(std::istream& in, Point& point);
-std::istream& operator>>(std::istream& in, Polygon& polygon);
+bool operator==(const Polygon &lhs, const Polygon &rhs);
+std::istream &operator>>(std::istream &in, Point &point);
+std::istream &operator>>(std::istream &in, Polygon &polygon);
 
 #endif

@@ -3,8 +3,9 @@
 
 #include "polygon.hpp"
 
-namespace Geometry {
-    double get_area(const Polygon& polygon);
+namespace Geometry
+{
+    double get_area(const Polygon &polygon);
 }
 
 #endif
