@@ -1,106 +1,19 @@
 #include "DataStruct.hpp"
 #include <iomanip>
+#include <regex>
+#include <sstream>
 
-std::istream &operator>>(std::istream &in, DelimiterIO &&dest)
+bool compareDataStruct(const DataStruct &a, const DataStruct &b)
 {
-  std::istream::sentry sentry(in);
-  if (!sentry)
+  if (a.key1 != b.key1)
   {
-    return in;
+    return a.key1 < b.key1;
   }
-  char c = 0;
-  in >> c;
-  if (c != dest.expected)
+  if (a.key2 != b.key2)
   {
-    in.setstate(std::ios::failbit);
+    return a.key2 < b.key2;
   }
-  return in;
-}
-
-std::istream &operator>>(std::istream &in, LabelIO &&dest)
-{
-  std::istream::sentry sentry(in);
-  if (!sentry)
-  {
-    return in;
-  }
-  for (char expected_char : dest.expected)
-  {
-    char c = 0;
-    in >> c;
-    if (c != expected_char)
-    {
-      in.setstate(std::ios::failbit);
-      break;
-    }
-  }
-  return in;
-}
-
-std::istream &operator>>(std::istream &in, DblLitIO &&dest)
-{
-  std::istream::sentry sentry(in);
-  if (!sentry)
-  {
-    return in;
-  }
-
-  double val = 0.0;
-  if (in >> val)
-  {
-    char suffix = 0;
-    in >> suffix;
-    if (suffix == 'd' || suffix == 'D')
-    {
-      dest.ref = val;
-    }
-    else
-    {
-      in.setstate(std::ios::failbit);
-    }
-  }
-  return in;
-}
-
-std::istream &operator>>(std::istream &in, UllHexIO &&dest)
-{
-  std::istream::sentry sentry(in);
-  if (!sentry)
-  {
-    return in;
-  }
-
-  char zero = 0, x = 0;
-  in >> zero >> x;
-  if (zero == '0' && (x == 'x' || x == 'X'))
-  {
-    unsigned long long val = 0;
-    if (in >> std::hex >> val)
-    {
-      dest.ref = val;
-    }
-  }
-  else
-  {
-    in.setstate(std::ios::failbit);
-  }
-  return in;
-}
-
-std::istream &operator>>(std::istream &in, StringIO &&dest)
-{
-  std::istream::sentry sentry(in);
-  if (!sentry)
-  {
-    return in;
-  }
-
-  in >> DelimiterIO{'"'};
-  if (in)
-  {
-    std::getline(in, dest.ref, '"');
-  }
-  return in;
+  return a.key3.length() < b.key3.length();
 }
 
 std::istream &operator>>(std::istream &in, DataStruct &dest)
@@ -111,60 +24,72 @@ std::istream &operator>>(std::istream &in, DataStruct &dest)
     return in;
   }
 
-  std::ios_base::fmtflags flags = in.flags();
-
-  if (!(in >> DelimiterIO{'('} >> DelimiterIO{':'}))
+  std::string line;
+  if (!std::getline(in, line))
   {
-    in.flags(flags);
     return in;
   }
 
-  bool has_key1 = false, has_key2 = false, has_key3 = false;
+  std::string dbl_lit_regex = R"(-?\d+\.\d+[dD])";
+  std::string ull_hex_regex = R"(0[xX][0-9a-fA-F]+)";
+  std::string str_regex = R"("[^"\\]*")";
 
-  for (int i = 0; i < 3; ++i)
+  std::string field_regex = "key(1|2|3) (" + dbl_lit_regex + "|" + ull_hex_regex + "|" + str_regex + ")";
+
+  std::regex full_pattern("^\\(:" + field_regex + ":" + field_regex + ":" + field_regex + ":\\)\\r?$");
+
+  std::smatch match;
+  if (!std::regex_match(line, match, full_pattern))
   {
-    std::string key_name;
-    char c = 0;
-    while (in >> c && c != ' ' && c != ':')
-    {
-      key_name += c;
-    }
+    in.setstate(std::ios::failbit);
+    return in;
+  }
 
-    if (key_name == "key1" && !has_key1)
+  std::regex key_value_pair_regex("key(1|2|3) ([^:]+)");
+  auto words_begin = std::sregex_iterator(line.begin(), line.end(), key_value_pair_regex);
+  auto words_end = std::sregex_iterator();
+
+  bool has_key1 = false, has_key2 = false, has_key3 = false;
+  double t_key1 = 0.0;
+  unsigned long long t_key2 = 0;
+  std::string t_key3 = "";
+
+  for (std::sregex_iterator i = words_begin; i != words_end; ++i)
+  {
+    std::smatch m = *i;
+    int key_num = std::stoi(m[1].str());
+    std::string val_str = m[2].str();
+
+    if (key_num == 1)
     {
-      in >> DblLitIO{dest.key1};
+      val_str.pop_back();
+      std::stringstream ss(val_str);
+      ss >> t_key1;
       has_key1 = true;
     }
-    else if (key_name == "key2" && !has_key2)
+    else if (key_num == 2)
     {
-      in >> UllHexIO{dest.key2};
+      t_key2 = std::stoull(val_str, nullptr, 16);
       has_key2 = true;
     }
-    else if (key_name == "key3" && !has_key3)
+    else if (key_num == 3)
     {
-      in >> StringIO{dest.key3};
+      t_key3 = val_str.substr(1, val_str.length() - 2);
       has_key3 = true;
-    }
-    else
-    {
-      in.setstate(std::ios::failbit);
-    }
-
-    if (i < 2)
-    {
-      if (!(in >> DelimiterIO{':'}))
-      {
-        in.setstate(std::ios::failbit);
-      }
     }
   }
 
-  if (!(in >> DelimiterIO{':'} >> DelimiterIO{')'}))
+  if (has_key1 && has_key2 && has_key3)
+  {
+    dest.key1 = t_key1;
+    dest.key2 = t_key2;
+    dest.key3 = t_key3;
+  }
+  else
   {
     in.setstate(std::ios::failbit);
   }
 
-  in.flags(flags);
   return in;
 }
 
@@ -184,17 +109,4 @@ std::ostream &operator<<(std::ostream &out, const DataStruct &src)
 
   out.flags(flags);
   return out;
-}
-
-bool compareDataStruct(const DataStruct &a, const DataStruct &b)
-{
-  if (a.key1 != b.key1)
-  {
-    return a.key1 < b.key1;
-  }
-  if (a.key2 != b.key2)
-  {
-    return a.key2 < b.key2;
-  }
-  return a.key3.length() < b.key3.length();
 }
