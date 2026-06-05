@@ -1,12 +1,11 @@
 #include "iotypes.hpp"
+#include <cctype>
 
 std::istream &operator>>(std::istream &in, DelimetrIO &&dest)
 {
   std::istream::sentry sentry(in);
   if (!sentry)
-  {
     return in;
-  }
 
   char c = '0';
   in >> c;
@@ -17,46 +16,38 @@ std::istream &operator>>(std::istream &in, DelimetrIO &&dest)
   return in;
 }
 
-std::istream &operator>>(std::istream &in, UllHexIO &&dest)
-{
-
-  std::istream::sentry sentry(in);
-  if (!sentry)
-  {
-    return in;
-  }
-
-  in >> std::hex >> dest.ref;
-  in >> std::dec;
-  return in;
-}
-
-std::istream &operator>>(std::istream &in, RationalIO &&dest)
+// Парсинг комплексного числа формата #c(1.0 -1.0)
+std::istream &operator>>(std::istream &in, ComplexLspIO &&dest)
 {
   std::istream::sentry sentry(in);
   if (!sentry)
-  {
     return in;
-  }
 
-  long long num = 0;
-  unsigned long long den = 0;
+  double real = 0.0;
+  double imag = 0.0;
 
-  in >> DelimetrIO{'('} >> DelimetrIO{':'} >> DelimetrIO{'N'} >> num;
-  in >> DelimetrIO{':'} >> DelimetrIO{'D'} >> den >> DelimetrIO{':'} >> DelimetrIO{')'};
+  in >> DelimetrIO{'#'} >> DelimetrIO{'c'} >> DelimetrIO{'('} >> real >> imag >> DelimetrIO{')'};
 
   if (in)
   {
-    if (den != 0)
-    {
-      dest.ref = std::make_pair(num, den);
-    }
-    else
-    {
-      in.setstate(std::ios::failbit);
-    }
+    dest.ref = std::complex<double>(real, imag);
   }
+  return in;
+}
 
+// Парсинг вещественного числа в научном формате (например, 5.45e-2)
+std::istream &operator>>(std::istream &in, DoubleSciIO &&dest)
+{
+  std::istream::sentry sentry(in);
+  if (!sentry)
+    return in;
+
+  double val = 0.0;
+  // std::cin умеет автоматически распознавать экспоненциальный формат e/E через стандартный >> double
+  if (in >> val)
+  {
+    dest.ref = val;
+  }
   return in;
 }
 
@@ -64,9 +55,7 @@ std::istream &operator>>(std::istream &in, StringIO &&dest)
 {
   std::istream::sentry sentry(in);
   if (!sentry)
-  {
     return in;
-  }
   return std::getline(in >> DelimetrIO{'"'}, dest.ref, '"');
 }
 
@@ -74,9 +63,7 @@ std::istream &operator>>(std::istream &in, KeyIO &&dest)
 {
   std::istream::sentry sentry(in);
   if (!sentry)
-  {
     return in;
-  }
 
   while (in && std::isalnum(in.peek()))
   {

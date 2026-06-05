@@ -1,49 +1,21 @@
-#ifndef DATASTRUCT_HPP
-#define DATASTRUCT_HPP
+#ifndef DATA_STRUCT_HPP
+#define DATA_STRUCT_HPP
 
 #include <iostream>
 #include <string>
 #include <complex>
+#include "iotypes.hpp"
+#include "iofmtguard.hpp"
 
 struct DataStruct
 {
-  std::complex<double> key1;
-  double key2;
+  std::complex<double> key1{0.0, 0.0};
+  double key2 = 0.0;
   std::string key3;
-
-  DataStruct() : key1(0.0, 0.0),
-                 key2(0.0),
-                 key3("")
-  {
-  }
 };
 
-struct DelimiterIO
-{
-  char expected;
-};
+std::istream &operator>>(std::istream &in, DataStruct &dest);
+std::ostream &operator<<(std::ostream &out, const DataStruct &src);
+bool operator<(const DataStruct &lhs, const DataStruct &rhs);
 
-struct LabelIO
-{
-  std::string expected;
-};
-
-// Перегрузка операторов ввода
-std::istream &operator>>(
-    std::istream &in,
-    DelimiterIO &&dest);
-
-std::istream &operator>>(
-    std::istream &in,
-    LabelIO &&dest);
-
-std::istream &operator>>(
-    std::istream &in,
-    DataStruct &dest);
-
-// Перегрузка оператора вывода
-std::ostream &operator<<(
-    std::ostream &out,
-    const DataStruct &src);
-
-#endif // DATASTRUCT_HPP
+#endif

@@ -1,159 +1,82 @@
 #include "dataStruct.hpp"
-#include <iomanip>
 #include <sstream>
+#include <iomanip>
+#include <algorithm>
 #include <cmath>
+#include "iofmtguard.hpp"
 
-std::istream &operator>>(
-    std::istream &in,
-    DelimiterIO &&)
+std::istream &operator>>(std::istream &in, DataStruct &dest)
 {
+  std::istream::sentry sentry(in);
+  if (!sentry)
+    return in;
+
+  DataStruct temp;
+
+  in >> DelimetrIO{'('};
+
+  for (int i = 0; i < 3; ++i)
+  {
+    std::string key = "";
+    in >> DelimetrIO{':'} >> KeyIO{key};
+
+    if (key == "key1")
+    {
+      in >> ComplexLspIO{temp.key1};
+    }
+    else if (key == "key2")
+    {
+      in >> DoubleSciIO{temp.key2};
+    }
+    else if (key == "key3")
+    {
+      in >> StringIO{temp.key3};
+    }
+    else
+    {
+      in.setstate(std::ios::failbit);
+    }
+  }
+
+  in >> DelimetrIO{':'} >> DelimetrIO{')'};
+
+  if (in)
+  {
+    dest = temp;
+  }
+
   return in;
 }
 
-std::istream &operator>>(
-    std::istream &in,
-    LabelIO &&)
-{
-  return in;
-}
-
-std::istream &operator>>(
-    std::istream &in,
-    DataStruct &dest)
-{
-  std::string line;
-  // Читаем всё содержимое потока (текущую строку)
-  if (!std::getline(in, line))
-  {
-    return in;
-  }
-
-  if (!line.empty() && line.back() == '\r')
-  {
-    line.pop_back();
-  }
-
-  if (line.empty())
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-
-  bool missingBrackets = line.find('(') == std::string::npos || line.find(')') == std::string::npos;
-  if (missingBrackets)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-
-  std::size_t p1 = line.find(":key1");
-  std::size_t p2 = line.find(":key2");
-  std::size_t p3 = line.find(":key3");
-
-  bool missingKeys = p1 == std::string::npos || p2 == std::string::npos || p3 == std::string::npos;
-  if (missingKeys)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-
-  DataStruct input;
-
-  // 1. Парсинг комплексного числа (key1)
-  std::size_t c_start = line.find("#c(", p1);
-  if (c_start == std::string::npos)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-  std::size_t c_end = line.find(')', c_start);
-  if (c_end == std::string::npos)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-  std::string c_sub = line.substr(
-      c_start + 3,
-      c_end - c_start - 3);
-  std::stringstream c_ss(c_sub);
-  double re, im;
-  if (c_ss >> re >> im)
-  {
-    input.key1 = {re, im};
-  }
-  else
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-
-  // 2. Парсинг вещественного числа (key2)
-  std::size_t col_after_k2 = line.find(':', p2 + 5);
-  if (col_after_k2 == std::string::npos)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-  std::string k2_sub = line.substr(
-      p2 + 5,
-      col_after_k2 - p2 - 5);
-
-  bool hasNoE = k2_sub.find_first_of("eE") == std::string::npos;
-  bool hasBadChars = k2_sub.find_first_of("dDlLuU'#(") != std::string::npos;
-  if (hasNoE || hasBadChars)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-  std::stringstream k2_ss(k2_sub);
-  double val;
-  if (k2_ss >> val)
-  {
-    input.key2 = val;
-  }
-  else
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-
-  // 3. Парсинг строки (key3)
-  std::size_t q_start = line.find('"', p3);
-  if (q_start == std::string::npos)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-  std::size_t q_end = line.find('"', q_start + 1);
-  if (q_end == std::string::npos)
-  {
-    in.setstate(std::ios::failbit);
-    return in;
-  }
-  input.key3 = line.substr(
-      q_start + 1,
-      q_end - q_start - 1);
-
-  dest = input;
-  return in;
-}
-
-std::ostream &operator<<(
-    std::ostream &out,
-    const DataStruct &src)
+std::ostream &operator<<(std::ostream &out, const DataStruct &src)
 {
   std::ostream::sentry sentry(out);
   if (!sentry)
-  {
     return out;
-  }
 
-  out << "(:key1 #c(";
-  out << std::fixed << std::setprecision(1) << src.key1.real();
-  out << " " << src.key1.imag() << ")";
-  out << ":key2 ";
-  out << std::scientific << std::setprecision(1) << src.key2;
+  iofmtguard guard(out);
+
+  // Вывод комплексного числа в формате #c(real imag)
+  out << "(:key1 #c(" << std::fixed << std::setprecision(1) << src.key1.real() << " " << src.key1.imag() << ")";
+
+  // Вывод double в научном формате с экспонентой в нижнем регистре (например 5.45e-02)
+  out << ":key2 " << std::scientific << std::nouppercase << std::setprecision(1) << src.key2;
+
   out << ":key3 \"" << src.key3 << "\":)";
 
   return out;
+}
+
+// Оператор сравнения по ТЗ (для комплексных чисел сравниваем модули через std::abs)
+bool operator<(const DataStruct &lhs, const DataStruct &rhs)
+{
+  if (std::abs(lhs.key1) != std::abs(rhs.key1))
+  {
+    return std::abs(lhs.key1) < std::abs(rhs.key1);
+  }
+  if (lhs.key2 != rhs.key2)
+  {
+    return lhs.key2 < rhs.key2;
+  }
+  return lhs.key3.length() < rhs.key3.length();
 }
