@@ -60,6 +60,17 @@ bool isPointInsidePolygon(Point p, const Polygon &poly)
 
 bool isIntersectingPolygons(const Polygon &p1, const Polygon &p2)
 {
+  if (p1 == p2)
+    return true;
+
+  // 1. Check for shared vertices
+  bool shares_vertices = std::any_of(p1.points.begin(), p1.points.end(), [&](const Point &pt1)
+                                     { return std::any_of(p2.points.begin(), p2.points.end(), [&](const Point &pt2)
+                                                          { return pt1.x == pt2.x && pt1.y == pt2.y; }); });
+  if (shares_vertices)
+    return true;
+
+  // 2. Check for intersecting segment boundaries
   size_t n1 = p1.points.size();
   size_t n2 = p2.points.size();
   const Point *base1 = p1.points.data();
@@ -69,6 +80,7 @@ bool isIntersectingPolygons(const Polygon &p1, const Polygon &p2)
                                            {
         size_t i = &a - base1;
         Point b = p1.points[(i + 1) % n1];
+
         return std::any_of(p2.points.begin(), p2.points.end(), [&](const Point& c) {
             size_t j = &c - base2;
             Point d = p2.points[(j + 1) % n2];
@@ -78,6 +90,7 @@ bool isIntersectingPolygons(const Polygon &p1, const Polygon &p2)
   if (boundary_intersection)
     return true;
 
+  // 3. Check for structural nesting (inside / enclosure)
   if (!p1.points.empty() && isPointInsidePolygon(p1.points[0], p2))
     return true;
   if (!p2.points.empty() && isPointInsidePolygon(p2.points[0], p1))
