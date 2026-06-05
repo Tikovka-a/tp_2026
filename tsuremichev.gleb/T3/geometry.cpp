@@ -56,7 +56,8 @@ bool isIntersectingPolygons(const Polygon &p1, const Polygon &p2)
         size_t i = &a - base1;
         Point b = p1.points[(i + 1) % n1];
         
-        return std::any_of(p2.points.begin(), p2.points.end(), [&](const Point& c) {
+        return std::any_of(p2.points.begin(),
+                           p2.points.end(), [&](const Point& c) {
             size_t j = &c - base2;
             Point d = p2.points[(j + 1) % n2];
             return isIntersectingSegments(a, b, c, d);
