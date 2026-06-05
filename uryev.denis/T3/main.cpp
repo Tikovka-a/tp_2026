@@ -8,10 +8,12 @@
 #include <iomanip>
 #include <iterator>
 #include <limits>
+#include <map>
+#include <functional>
 #include "Polygon.hpp"
 
 // Реализация AREA разновидностей
-void handleArea(const std::vector<Polygon>& polygons, std::istream& is)
+void handleArea(std::vector<Polygon>& polygons, std::istream& is)
 {
   std::string arg;
   if (!(is >> arg))
@@ -78,7 +80,6 @@ void handleArea(const std::vector<Polygon>& polygons, std::istream& is)
     }
   }
 
-  // Проверяем, что в строке команды не осталось лишнего мусора
   char dummy;
   if (is >> dummy)
   {
@@ -90,16 +91,10 @@ void handleArea(const std::vector<Polygon>& polygons, std::istream& is)
 }
 
 // Реализация MAX
-void handleMax(const std::vector<Polygon>& polygons, std::istream& is)
+void handleMax(std::vector<Polygon>& polygons, std::istream& is)
 {
   std::string arg;
-  if (!(is >> arg))
-  {
-    std::cout << "<INVALID COMMAND>\n";
-    return;
-  }
-
-  if (polygons.empty())
+  if (!(is >> arg) || polygons.empty())
   {
     std::cout << "<INVALID COMMAND>\n";
     return;
@@ -131,16 +126,10 @@ void handleMax(const std::vector<Polygon>& polygons, std::istream& is)
 }
 
 // Реализация MIN
-void handleMin(const std::vector<Polygon>& polygons, std::istream& is)
+void handleMin(std::vector<Polygon>& polygons, std::istream& is)
 {
   std::string arg;
-  if (!(is >> arg))
-  {
-    std::cout << "<INVALID COMMAND>\n";
-    return;
-  }
-
-  if (polygons.empty())
+  if (!(is >> arg) || polygons.empty())
   {
     std::cout << "<INVALID COMMAND>\n";
     return;
@@ -172,7 +161,7 @@ void handleMin(const std::vector<Polygon>& polygons, std::istream& is)
 }
 
 // Реализация COUNT
-void handleCount(const std::vector<Polygon>& polygons, std::istream& is)
+void handleCount(std::vector<Polygon>& polygons, std::istream& is)
 {
   std::string arg;
   if (!(is >> arg))
@@ -257,7 +246,7 @@ void handleEcho(std::vector<Polygon>& polygons, std::istream& is)
 }
 
 // Реализация INFRAME
-void handleInFrame(const std::vector<Polygon>& polygons, std::istream& is)
+void handleInFrame(std::vector<Polygon>& polygons, std::istream& is)
 {
   Polygon target;
   char dummy;
@@ -313,6 +302,16 @@ int main(int argc, char* argv[])
   }
   file.close();
 
+  using HandlerType = std::function<void(std::vector<Polygon>&, std::istream&)>;
+  std::map<std::string, HandlerType> cmds;
+
+  cmds["AREA"] = handleArea;
+  cmds["MAX"] = handleMax;
+  cmds["MIN"] = handleMin;
+  cmds["COUNT"] = handleCount;
+  cmds["ECHO"] = handleEcho;
+  cmds["INFRAME"] = handleInFrame;
+
   while (std::getline(std::cin, line))
   {
     if (line.empty()) continue;
@@ -321,31 +320,11 @@ int main(int argc, char* argv[])
     std::string command;
     if (!(ss >> command)) continue;
 
-    if (command == "AREA")
+    try
     {
-      handleArea(polygons, ss);
+      cmds.at(command)(polygons, ss);
     }
-    else if (command == "MAX")
-    {
-      handleMax(polygons, ss);
-    }
-    else if (command == "MIN")
-    {
-      handleMin(polygons, ss);
-    }
-    else if (command == "COUNT")
-    {
-      handleCount(polygons, ss);
-    }
-    else if (command == "ECHO")
-    {
-      handleEcho(polygons, ss);
-    }
-    else if (command == "INFRAME")
-    {
-      handleInFrame(polygons, ss);
-    }
-    else
+    catch (...)
     {
       std::cout << "<INVALID COMMAND>\n";
     }
