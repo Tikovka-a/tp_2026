@@ -46,9 +46,9 @@ void HuffmanEncoder::buildTree(const std::string &text)
                       NodeComparator>
       priorityQueue;
 
-  for (auto const &[ch, freq] : frequencies)
+  for (std::map<char, size_t>::const_iterator it = frequencies.begin(); it != frequencies.end(); ++it)
   {
-    priorityQueue.push(std::make_unique<HuffmanNode>(ch, freq));
+    priorityQueue.push(std::make_unique<HuffmanNode>(it->first, it->second));
   }
 
   while (priorityQueue.size() > 1)
@@ -66,8 +66,17 @@ void HuffmanEncoder::buildTree(const std::string &text)
     priorityQueue.push(std::move(parentNode));
   }
 
-  treeRoot = std::move(const_cast<std::unique_ptr<HuffmanNode> &>(priorityQueue.top()));
-  priorityQueue.pop();
+  if (!priorityQueue.empty())
+  {
+    treeRoot = std::move(const_cast<std::unique_ptr<HuffmanNode> &>(priorityQueue.top()));
+    priorityQueue.pop();
+  }
+
+  if (treeRoot && !treeRoot->left && !treeRoot->right)
+  {
+    codeTable[treeRoot->character] = "0";
+    return;
+  }
 
   generateCodes(treeRoot.get(), "");
 }
@@ -113,10 +122,15 @@ std::string HuffmanEncoder::decode(const std::string &bitstream) const
 
 void HuffmanEncoder::printTable() const
 {
-  for (auto const &[ch, code] : codeTable)
+  for (std::map<char, std::string>::const_iterator it = codeTable.begin(); it != codeTable.end(); ++it)
   {
+    unsigned char ch = it->first;
+    const std::string &code = it->second;
+
     if (ch == ' ')
       std::cout << "  ' ' (пробел) : " << code << "\n";
+    else if (ch == '\n')
+      std::cout << "  '\\n' (перенос): " << code << "\n";
     else
       std::cout << "  '" << ch << "'          : " << code << "\n";
   }

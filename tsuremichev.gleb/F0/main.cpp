@@ -10,16 +10,17 @@ double calculateEntropy(const std::string &text)
   if (text.empty())
     return 0.0;
 
-  std::map<char, size_t> freqs;
+  std::map<unsigned char, size_t> freqs;
   for (char c : text)
-    freqs[c]++;
+    freqs[static_cast<unsigned char>(c)]++;
 
   double entropy = 0.0;
-  double len = text.length();
-  for (auto const &[ch, count] : freqs)
+  double len = static_cast<double>(text.length());
+
+  for (std::map<unsigned char, size_t>::const_iterator it = freqs.begin(); it != freqs.end(); ++it)
   {
-    double p = count / len;
-    entropy -= p * log2(p);
+    double p = static_cast<double>(it->second) / len;
+    entropy -= p * std::log2(p);
   }
   return entropy;
 }
@@ -61,7 +62,7 @@ int main()
     double compBits = encoded.length();
     double compressionRatio = origBits / compBits;
     double textEntropy = calculateEntropy(userInput);
-    double avgCodeLen = compBits / (double)userInput.length();
+    double avgCodeLen = compBits / static_cast<double>(userInput.length());
 
     std::cout << "\n=================================="
               << "================================\n";
