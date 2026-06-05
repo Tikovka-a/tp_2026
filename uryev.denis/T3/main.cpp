@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -9,6 +9,7 @@
 #include <iterator>
 #include "Polygon.hpp"
 
+// Реализация AREA разновидностей
 void handleArea(const std::vector<Polygon> &polygons, std::istream &is)
 {
   std::string arg;
@@ -150,6 +151,7 @@ void handleCount(const std::vector<Polygon> &polygons, std::istream &is)
     try
     {
       size_t numVertexes = std::stoull(arg);
+      if (numVertexes < 3) throw std::invalid_argument("");
       count = std::count_if(polygons.begin(),
                             polygons.end(), [numVertexes](const Polygon &p)
                             { return p.points.size() == numVertexes; });
@@ -168,6 +170,8 @@ void handleEcho(std::vector<Polygon> &polygons, std::istream &is)
   if (!(is >> target))
   {
     std::cout << "<INVALID COMMAND>\n";
+    is.clear();
+    is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return;
   }
   std::vector<Polygon> updatedCollection;
@@ -191,6 +195,8 @@ void handleInFrame(const std::vector<Polygon> &polygons, std::istream &is)
   if (!(is >> target) || polygons.empty())
   {
     std::cout << "<INVALID COMMAND>\n";
+    is.clear();
+    is.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     return;
   }
 
@@ -220,17 +226,20 @@ int main(int argc, char *argv[])
   }
   std::vector<Polygon> polygons;
   std::string line;
-  while (std::getline(file, line))
+  while (!file.eof())
   {
-    if (line.empty())
-      continue;
-    std::stringstream ss(line);
     Polygon poly;
-    if (ss >> poly)
+    if (file >> poly)
     {
       polygons.push_back(poly);
     }
+    else
+    {
+      file.clear();
+      file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
   }
+
   file.close();
   std::string command;
   while (std::cin >> command)
@@ -269,4 +278,3 @@ int main(int argc, char *argv[])
 
   return 0;
 }
-
