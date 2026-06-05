@@ -121,7 +121,7 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& d) {
     switch(d.type1) {
         case DataStruct::DOUBLE: out << std::fixed << std::setprecision(1) << d.double1 << "d"; break;
         case DataStruct::LONG_LONG: out << d.ll1 << "ll"; break;
-        case DataStruct::UNSIGNED_LONG_LONG: 
+        case DataStruct::UNSIGNED_LONG_LONG:
             if (d.ull1 <= 9) out << d.ull1;
             else out << "0x" << std::hex << std::uppercase << d.ull1 << std::dec;
             break;
@@ -134,7 +134,7 @@ std::ostream& operator<<(std::ostream& out, const DataStruct& d) {
     switch(d.type2) {
         case DataStruct::DOUBLE: out << std::fixed << std::setprecision(1) << d.double2 << "d"; break;
         case DataStruct::LONG_LONG: out << d.ll2 << "ll"; break;
-        case DataStruct::UNSIGNED_LONG_LONG: 
+        case DataStruct::UNSIGNED_LONG_LONG:
             if (d.ull2 <= 9) out << d.ull2;
             else out << "0x" << std::hex << std::uppercase << d.ull2 << std::dec;
             break;
