@@ -1,9 +1,7 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <string>
 #include <sstream>
-#include <limits>
 #include "Polygon.h"
 #include "Commands.h"
 
@@ -20,27 +18,25 @@ int main(int argc, char* argv[]) {
         Polygon poly;
         if (ss >> poly) {
             std::string extra;
-            if (!(ss >> extra)) { // Только если в строке больше нет данных
-                figures.push_back(poly);
-            }
+            if (!(ss >> extra)) figures.push_back(poly);
         }
     }
 
-    std::string cmd;
-    while (std::cin >> cmd) {
+    while (std::getline(std::cin, line)) {
+        if (line.empty()) continue;
+        std::stringstream ss(line);
+        std::string cmd;
+        if (!(ss >> cmd)) continue;
         try {
-            if (cmd == "AREA") cmdArea(figures);
-            else if (cmd == "COUNT") cmdCount(figures);
-            else if (cmd == "MAX") cmdMax(figures);
-            else if (cmd == "MIN") cmdMin(figures);
-            else if (cmd == "INTERSECTIONS") cmdIntersections(figures);
-            else if (cmd == "RMECHO") cmdRmEcho(figures);
+            if (cmd == "AREA") cmdArea(figures, ss);
+            else if (cmd == "MAX") cmdMax(figures, ss);
+            else if (cmd == "MIN") cmdMin(figures, ss);
+            else if (cmd == "COUNT") cmdCount(figures, ss);
+            else if (cmd == "INTERSECTIONS") cmdIntersections(figures, ss);
+            else if (cmd == "RMECHO") cmdRmEcho(figures, ss);
             else throw std::runtime_error("");
         } catch (...) {
             std::cout << "<INVALID COMMAND>\n";
-            std::cin.clear();
-            // Очищаем поток до конца строки, чтобы не читать мусор как следующую команду
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
     }
     return 0;

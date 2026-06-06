@@ -23,29 +23,14 @@ bool segmentsIntersect(Segment s1, Segment s2) {
         return p.x <= std::max(s.a.x, s.b.x) && p.x >= std::min(s.a.x, s.b.x) &&
                p.y <= std::max(s.a.y, s.b.y) && p.y >= std::min(s.a.y, s.b.y);
     };
-    long long d1 = cross_product(s2.a, s2.b, s1.a);
-    long long d2 = cross_product(s2.a, s2.b, s1.b);
-    long long d3 = cross_product(s1.a, s1.b, s2.a);
-    long long d4 = cross_product(s1.a, s1.b, s2.b);
-
-    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-        ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
+    long long d1 = cross_product(s2.a, s2.b, s1.a), d2 = cross_product(s2.a, s2.b, s1.b);
+    long long d3 = cross_product(s1.a, s1.b, s2.a), d4 = cross_product(s1.a, s1.b, s2.b);
+    if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
     if (d1 == 0 && on_segment(s1.a, s2)) return true;
     if (d2 == 0 && on_segment(s1.b, s2)) return true;
     if (d3 == 0 && on_segment(s2.a, s1)) return true;
     if (d4 == 0 && on_segment(s2.b, s1)) return true;
     return false;
-}
-
-bool isPointInPolygon(Point pt, const Polygon& poly) {
-    bool res = false;
-    for (size_t i = 0, j = poly.points.size() - 1; i < poly.points.size(); j = i++) {
-        if (((poly.points[i].y > pt.y) != (poly.points[j].y > pt.y)) &&
-            (pt.x < (poly.points[j].x - poly.points[i].x) * (pt.y - poly.points[i].y) /
-            static_cast<double>(poly.points[j].y - poly.points[i].y) + poly.points[i].x))
-            res = !res;
-    }
-    return res;
 }
 
 bool polygonsIntersect(const Polygon& p1, const Polygon& p2) {
@@ -56,5 +41,5 @@ bool polygonsIntersect(const Polygon& p1, const Polygon& p2) {
             if (segmentsIntersect(s1, s2)) return true;
         }
     }
-    return isPointInPolygon(p1.points[0], p2) || isPointInPolygon(p2.points[0], p1);
+    return false;
 }

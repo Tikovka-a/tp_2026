@@ -4,40 +4,45 @@
 #include <numeric>
 #include <algorithm>
 #include <iomanip>
-#include <limits>
 
-void cmdArea(const std::vector<Polygon>& figures) {
+void validateEnd(std::stringstream& ss) {
+    std::string extra;
+    if (ss >> extra) throw std::runtime_error("");
+}
+
+void cmdArea(const std::vector<Polygon>& figures, std::stringstream& ss) {
     std::string arg;
-    if (!(std::cin >> arg)) return;
+    if (!(ss >> arg)) throw std::runtime_error("");
     double res = 0;
     if (arg == "EVEN") {
-        res = std::accumulate(figures.begin(), figures.end(), 0.0, [](double sum, const Polygon& p) {
-            return (p.points.size() % 2 == 0) ? sum + getArea(p) : sum;
+        res = std::accumulate(figures.begin(), figures.end(), 0.0, [](double s, const Polygon& p) {
+            return (p.points.size() % 2 == 0) ? s + getArea(p) : s;
         });
     } else if (arg == "ODD") {
-        res = std::accumulate(figures.begin(), figures.end(), 0.0, [](double sum, const Polygon& p) {
-            return (p.points.size() % 2 != 0) ? sum + getArea(p) : sum;
+        res = std::accumulate(figures.begin(), figures.end(), 0.0, [](double s, const Polygon& p) {
+            return (p.points.size() % 2 != 0) ? s + getArea(p) : s;
         });
     } else if (arg == "MEAN") {
         if (figures.empty()) throw std::runtime_error("");
-        res = std::accumulate(figures.begin(), figures.end(), 0.0, [](double sum, const Polygon& p) {
-            return sum + getArea(p);
+        res = std::accumulate(figures.begin(), figures.end(), 0.0, [](double s, const Polygon& p) {
+            return s + getArea(p);
         }) / figures.size();
     } else {
-        if (!std::all_of(arg.begin(), arg.end(), ::isdigit)) throw std::runtime_error("");
         size_t n = std::stoul(arg);
         if (n < 3) throw std::runtime_error("");
-        res = std::accumulate(figures.begin(), figures.end(), 0.0, [n](double sum, const Polygon& p) {
-            return (p.points.size() == n) ? sum + getArea(p) : sum;
+        res = std::accumulate(figures.begin(), figures.end(), 0.0, [n](double s, const Polygon& p) {
+            return (p.points.size() == n) ? s + getArea(p) : s;
         });
     }
+    validateEnd(ss);
     std::cout << std::fixed << std::setprecision(1) << res << "\n";
 }
 
-void cmdMax(const std::vector<Polygon>& figures) {
+void cmdMax(const std::vector<Polygon>& figures, std::stringstream& ss) {
     if (figures.empty()) throw std::runtime_error("");
     std::string arg;
-    std::cin >> arg;
+    if (!(ss >> arg)) throw std::runtime_error("");
+    validateEnd(ss);
     if (arg == "AREA") {
         auto it = std::max_element(figures.begin(), figures.end(), [](const Polygon& a, const Polygon& b) {
             return getArea(a) < getArea(b);
@@ -51,10 +56,11 @@ void cmdMax(const std::vector<Polygon>& figures) {
     } else throw std::runtime_error("");
 }
 
-void cmdMin(const std::vector<Polygon>& figures) {
+void cmdMin(const std::vector<Polygon>& figures, std::stringstream& ss) {
     if (figures.empty()) throw std::runtime_error("");
     std::string arg;
-    std::cin >> arg;
+    if (!(ss >> arg)) throw std::runtime_error("");
+    validateEnd(ss);
     if (arg == "AREA") {
         auto it = std::min_element(figures.begin(), figures.end(), [](const Polygon& a, const Polygon& b) {
             return getArea(a) < getArea(b);
@@ -68,35 +74,36 @@ void cmdMin(const std::vector<Polygon>& figures) {
     } else throw std::runtime_error("");
 }
 
-void cmdCount(const std::vector<Polygon>& figures) {
+void cmdCount(const std::vector<Polygon>& figures, std::stringstream& ss) {
     std::string arg;
-    std::cin >> arg;
+    if (!(ss >> arg)) throw std::runtime_error("");
+    size_t res = 0;
     if (arg == "EVEN") {
-        std::cout << std::count_if(figures.begin(), figures.end(), [](const Polygon& p) { return p.points.size() % 2 == 0; }) << "\n";
+        res = std::count_if(figures.begin(), figures.end(), [](const Polygon& p) { return p.points.size() % 2 == 0; });
     } else if (arg == "ODD") {
-        std::cout << std::count_if(figures.begin(), figures.end(), [](const Polygon& p) { return p.points.size() % 2 != 0; }) << "\n";
+        res = std::count_if(figures.begin(), figures.end(), [](const Polygon& p) { return p.points.size() % 2 != 0; });
     } else {
-        if (!std::all_of(arg.begin(), arg.end(), ::isdigit)) throw std::runtime_error("");
         size_t n = std::stoul(arg);
         if (n < 3) throw std::runtime_error("");
-        std::cout << std::count_if(figures.begin(), figures.end(), [n](const Polygon& p) { return p.points.size() == n; }) << "\n";
+        res = std::count_if(figures.begin(), figures.end(), [n](const Polygon& p) { return p.points.size() == n; });
     }
+    validateEnd(ss);
+    std::cout << res << "\n";
 }
 
-void cmdIntersections(const std::vector<Polygon>& figures) {
+void cmdIntersections(const std::vector<Polygon>& figures, std::stringstream& ss) {
     Polygon target;
-    if (!(std::cin >> target)) {
-        throw std::runtime_error("");
-    }
-    // Проверка, не осталось ли мусора в строке команды
+    if (!(ss >> target)) throw std::runtime_error("");
+    validateEnd(ss);
     std::cout << std::count_if(figures.begin(), figures.end(), [&](const Polygon& p) {
         return polygonsIntersect(p, target);
     }) << "\n";
 }
 
-void cmdRmEcho(std::vector<Polygon>& figures) {
+void cmdRmEcho(std::vector<Polygon>& figures, std::stringstream& ss) {
     Polygon target;
-    if (!(std::cin >> target)) throw std::runtime_error("");
+    if (!(ss >> target)) throw std::runtime_error("");
+    validateEnd(ss);
     size_t initial_size = figures.size();
     auto it = std::unique(figures.begin(), figures.end(), [&](const Polygon& a, const Polygon& b) {
         return (a == target && b == target);
