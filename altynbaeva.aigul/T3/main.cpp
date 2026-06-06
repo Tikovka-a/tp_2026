@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
-#include <optional>
 
 struct Point {
     int x, y;
@@ -22,7 +21,9 @@ struct Polygon {
     double area = 0.0;
     bool operator==(const Polygon& other) const {
         if (points.size() != other.points.size()) return false;
-        return std::equal(points.begin(), points.end(), other.points.begin());
+        return std::equal(
+            points.begin(), points.end(), other.points.begin()
+        );
     }
 };
 
@@ -63,7 +64,7 @@ bool hasRightAngle(const Polygon& polygon) {
     );
 }
 
-std::optional<Polygon> parsePolygon(const std::string& line) {
+bool parsePolygon(const std::string& line, Polygon& out) {
     static const std::regex re(
         R"(^\s*(\d+)\s*((?:\s*\(-?\d+;-?\d+\)\s*)+)\s*$)"
     );
@@ -73,7 +74,7 @@ std::optional<Polygon> parsePolygon(const std::string& line) {
 
     std::smatch match;
     if (!std::regex_match(line, match, re)) {
-        return std::nullopt;
+        return false;
     }
 
     int n = std::stoi(match[1].str());
@@ -100,13 +101,12 @@ std::optional<Polygon> parsePolygon(const std::string& line) {
     );
 
     if (points.size() != static_cast<size_t>(n)) {
-        return std::nullopt;
+        return false;
     }
 
-    Polygon p;
-    p.points = std::move(points);
-    p.area = calculateArea(p.points);
-    return p;
+    out.points = std::move(points);
+    out.area = calculateArea(out.points);
+    return true;
 }
 
 struct EchoInserter {
@@ -177,8 +177,8 @@ void processCommand(
                 try {
                     int num = std::stoi(arg1);
                     auto matchCount = [num](double acc, const Polygon& p) {
-                        return acc + (p.points.size() ==
-                                      static_cast<size_t>(num) ?
+                        size_t sz = static_cast<size_t>(num);
+                        return acc + (p.points.size() == sz ?
                                       p.area : 0.0);
                     };
                     double sum = std::accumulate(
@@ -280,8 +280,8 @@ void processCommand(
                 try {
                     int num = std::stoi(arg1);
                     auto matchCount = [num](const Polygon& p) {
-                        return p.points.size() ==
-                               static_cast<size_t>(num);
+                        size_t sz = static_cast<size_t>(num);
+                        return p.points.size() == sz;
                     };
                     int count = std::count_if(
                         polygons.begin(), polygons.end(), matchCount
@@ -303,9 +303,9 @@ void processCommand(
             rest.erase(rest.find_last_not_of(" \t") + 1);
         }
 
-        auto target_opt = parsePolygon(rest);
-        if (target_opt) {
-            Polygon target = *target_opt;
+        Polygon target;
+        bool ok = parsePolygon(rest, target);
+        if (ok) {
             std::vector<Polygon> new_polygons;
             new_polygons.reserve(polygons.size() * 2);
             int count = 0;
@@ -361,9 +361,9 @@ int main(int argc, char* argv[]) {
         line.erase(line.find_last_not_of(" \t\r\n") + 1);
         if (line.empty()) continue;
 
-        auto p_opt = parsePolygon(line);
-        if (p_opt) {
-            polygons.push_back(std::move(*p_opt));
+        Polygon p;
+        if (parsePolygon(line, p)) {
+            polygons.push_back(std::move(p));
         }
     }
     file.close();
