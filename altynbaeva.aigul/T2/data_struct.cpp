@@ -6,6 +6,7 @@
 #include <iomanip>
 #include <cctype>
 #include <stdexcept>
+#include <utility>
 
 char parseKey1(const std::string& s) {
     if (s.size() == 3 && s[0] == '\'' && s[2] == '\'') {
@@ -88,7 +89,7 @@ std::pair<std::string, std::string> parseField(const std::string& line, size_t& 
         pos = colonPos; // не пропускаем ':', он будет обработан в следующем вызове
     }
 
-    return {keyName, value};
+    return std::make_pair(keyName, value);
 }
 
 std::istream& operator>>(std::istream& in, DataStruct& data) {
@@ -124,7 +125,9 @@ std::istream& operator>>(std::istream& in, DataStruct& data) {
     size_t pos = 0;
     try {
         while (pos < line.size() - 2) { // -2 чтобы не парсить ":)"
-            auto [keyName, keyValue] = parseField(line, pos);
+            std::pair<std::string, std::string> field = parseField(line, pos);
+            std::string keyName = field.first;
+            std::string keyValue = field.second;
 
             if (keyName == "key1") {
                 k1 = parseKey1(keyValue);
