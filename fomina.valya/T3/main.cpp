@@ -56,9 +56,14 @@ int main(int argc, char* argv[]) {
             } else {
                 try {
                     int n = std::stoi(sub);
-                    double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
-                                                 [n](double acc, const Polygon& p) { return p.points.size() == static_cast<size_t>(n) ? acc + area(p) : acc; });
-                    std::cout << sum << "\n";
+                    // ИСПРАВЛЕНО: проверяем, что n >= 3
+                    if (n < 3) {
+                        std::cout << "<INVALID COMMAND>\n";
+                    } else {
+                        double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
+                                                     [n](double acc, const Polygon& p) { return p.points.size() == static_cast<size_t>(n) ? acc + area(p) : acc; });
+                        std::cout << sum << "\n";
+                    }
                 } catch (...) {
                     std::cout << "<INVALID COMMAND>\n";
                 }
@@ -80,7 +85,8 @@ int main(int argc, char* argv[]) {
                 auto cmp = [](const Polygon& a, const Polygon& b) { return a.points.size() < b.points.size(); };
                 auto it = (cmd == "MAX") ? std::max_element(polygons.begin(), polygons.end(), cmp)
                 : std::min_element(polygons.begin(), polygons.end(), cmp);
-                std::cout << static_cast<double>(it->points.size()) << "\n";
+                // ИСПРАВЛЕНО: выводим целое число, а не вещественное
+                std::cout << std::noshowpoint << it->points.size() << "\n";
             } else {
                 std::cout << "<INVALID COMMAND>\n";
             }
@@ -97,8 +103,13 @@ int main(int argc, char* argv[]) {
             } else {
                 try {
                     int n = std::stoi(sub);
-                    std::cout << std::count_if(polygons.begin(), polygons.end(),
-                                               [n](const Polygon& p) { return p.points.size() == static_cast<size_t>(n); }) << "\n";
+                    // ИСПРАВЛЕНО: проверяем, что n >= 3
+                    if (n < 3) {
+                        std::cout << "<INVALID COMMAND>\n";
+                    } else {
+                        std::cout << std::count_if(polygons.begin(), polygons.end(),
+                                                   [n](const Polygon& p) { return p.points.size() == static_cast<size_t>(n); }) << "\n";
+                    }
                 } catch (...) {
                     std::cout << "<INVALID COMMAND>\n";
                 }
@@ -137,26 +148,33 @@ int main(int argc, char* argv[]) {
                 continue;
             }
 
-            auto all_points = std::accumulate(polygons.begin(), polygons.end(), std::vector<Point>{},
-                                              [](std::vector<Point> acc, const Polygon& p) {
-                                                  acc.insert(acc.end(), p.points.begin(), p.points.end());
-                                                  return acc;
-                                              });
+            // ИСПРАВЛЕНО: инициализируем правильными значениями
+            int global_min_x = INT_MAX, global_max_x = INT_MIN;
+            int global_min_y = INT_MAX, global_max_y = INT_MIN;
 
-            auto minmax_x = std::minmax_element(all_points.begin(), all_points.end(),
-                                                [](const Point& a, const Point& b) { return a.x < b.x; });
-            auto minmax_y = std::minmax_element(all_points.begin(), all_points.end(),
-                                                [](const Point& a, const Point& b) { return a.y < b.y; });
+            for (const auto& p : polygons) {
+                for (const auto& pt : p.points) {
+                    global_min_x = std::min(global_min_x, pt.x);
+                    global_max_x = std::max(global_max_x, pt.x);
+                    global_min_y = std::min(global_min_y, pt.y);
+                    global_max_y = std::max(global_max_y, pt.y);
+                }
+            }
 
-            auto t_minmax_x = std::minmax_element(target.points.begin(), target.points.end(),
-                                                  [](const Point& a, const Point& b) { return a.x < b.x; });
-            auto t_minmax_y = std::minmax_element(target.points.begin(), target.points.end(),
-                                                  [](const Point& a, const Point& b) { return a.y < b.y; });
+            int t_min_x = INT_MAX, t_max_x = INT_MIN;
+            int t_min_y = INT_MAX, t_max_y = INT_MIN;
 
-            bool inside = (t_minmax_x.first->x >= minmax_x.first->x) &&
-            (t_minmax_x.second->x <= minmax_x.second->x) &&
-            (t_minmax_y.first->y >= minmax_y.first->y) &&
-            (t_minmax_y.second->y <= minmax_y.second->y);
+            for (const auto& pt : target.points) {
+                t_min_x = std::min(t_min_x, pt.x);
+                t_max_x = std::max(t_max_x, pt.x);
+                t_min_y = std::min(t_min_y, pt.y);
+                t_max_y = std::max(t_max_y, pt.y);
+            }
+
+            bool inside = (t_min_x >= global_min_x) &&
+            (t_max_x <= global_max_x) &&
+            (t_min_y >= global_min_y) &&
+            (t_max_y <= global_max_y);
 
             std::cout << (inside ? "<TRUE>" : "<FALSE>") << "\n";
         }
