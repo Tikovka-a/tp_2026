@@ -1,5 +1,6 @@
 #include "Polygon.h"
 #include <algorithm>
+#include <string>
 
 bool operator==(const Point& a, const Point& b) {
     return a.x == b.x && a.y == b.y;
@@ -11,6 +12,8 @@ bool operator==(const Polygon& a, const Polygon& b) {
 }
 
 std::istream& operator>>(std::istream& in, Point& p) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
     char c1, c2, c3;
     int x, y;
     if (!(in >> c1) || c1 != '(') { in.setstate(std::ios::failbit); return in; }
@@ -23,8 +26,10 @@ std::istream& operator>>(std::istream& in, Point& p) {
 }
 
 std::istream& operator>>(std::istream& in, Polygon& p) {
+    std::istream::sentry sentry(in);
+    if (!sentry) return in;
     size_t count;
-    if (!(in >> count)) return in;
+    if (!(in >> count) || count < 3) { in.setstate(std::ios::failbit); return in; }
     std::vector<Point> temp;
     for (size_t i = 0; i < count; ++i) {
         Point pt;

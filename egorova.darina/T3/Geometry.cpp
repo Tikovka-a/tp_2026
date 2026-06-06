@@ -15,21 +15,20 @@ double getArea(const Polygon& p) {
 struct Segment { Point a, b; };
 
 bool segmentsIntersect(Segment s1, Segment s2) {
-    auto cross_product = [](Point a, Point b, Point c) {
-        return static_cast<long long>(b.x - a.x) * (c.y - a.y) -
-               static_cast<long long>(b.y - a.y) * (c.x - a.x);
+    auto cp = [](Point a, Point b, Point c) {
+        return static_cast<long long>(b.x - a.x) * (c.y - a.y) - static_cast<long long>(b.y - a.y) * (c.x - a.x);
     };
-    auto on_segment = [](Point p, Segment s) {
+    auto on = [](Point p, Segment s) {
         return p.x <= std::max(s.a.x, s.b.x) && p.x >= std::min(s.a.x, s.b.x) &&
                p.y <= std::max(s.a.y, s.b.y) && p.y >= std::min(s.a.y, s.b.y);
     };
-    long long d1 = cross_product(s2.a, s2.b, s1.a), d2 = cross_product(s2.a, s2.b, s1.b);
-    long long d3 = cross_product(s1.a, s1.b, s2.a), d4 = cross_product(s1.a, s1.b, s2.b);
+    long long d1 = cp(s2.a, s2.b, s1.a), d2 = cp(s2.a, s2.b, s1.b);
+    long long d3 = cp(s1.a, s1.b, s2.a), d4 = cp(s1.a, s1.b, s2.b);
     if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) return true;
-    if (d1 == 0 && on_segment(s1.a, s2)) return true;
-    if (d2 == 0 && on_segment(s1.b, s2)) return true;
-    if (d3 == 0 && on_segment(s2.a, s1)) return true;
-    if (d4 == 0 && on_segment(s2.b, s1)) return true;
+    if (d1 == 0 && on(s1.a, s2)) return true;
+    if (d2 == 0 && on(s1.b, s2)) return true;
+    if (d3 == 0 && on(s2.a, s1)) return true;
+    if (d4 == 0 && on(s2.b, s1)) return true;
     return false;
 }
 
