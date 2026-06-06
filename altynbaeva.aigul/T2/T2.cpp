@@ -227,8 +227,10 @@ bool comparator(const DataStruct& a, const DataStruct& b) {
         case DataStruct::CHAR: return a.char1 < b.char1;
         case DataStruct::COMPLEX: return std::abs(a.complex1) < std::abs(b.complex1);
         case DataStruct::RATIONAL: {
-            double av = (double)a.rational1.first / a.rational1.second;
-            double bv = (double)b.rational1.first / b.rational1.second;
+            double av = static_cast<double>(a.rational1.first)
+                / static_cast<double>(a.rational1.second);
+            double bv = static_cast<double>(b.rational1.first)
+                / static_cast<double>(b.rational1.second);
             return av < bv;
         }
         default: return false;
