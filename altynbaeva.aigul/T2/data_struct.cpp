@@ -129,19 +129,3 @@ std::istream &operator>>(std::istream &in, DataStruct &data)
     data.key3 = k3;
     return in;
 }
-
-std::ostream &operator<<(std::ostream &out, const DataStruct &data)
-{
-    out << "(:key1 '" << data.key1 << "':key2 0x" << std::hex << std::uppercase
-        << data.key2 << std::dec << std::nouppercase << ":key3 \"" << data.key3 << "\":)";
-    return out;
-}
-
-bool comparator(const DataStruct &a, const DataStruct &b)
-{
-    if (a.key1 != b.key1)
-        return a.key1 < b.key1;
-    if (a.key2 != b.key2)
-        return a.key2 < b.key2;
-    return a.key3.size() < b.key3.size();
-}
