@@ -21,33 +21,45 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<Polygon> polygons;
-    Polygon p;
-    while (file >> p) {
-        polygons.push_back(p);
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        std::istringstream iss(line);
+        Polygon p;
+        if (iss >> p) {
+            polygons.push_back(p);
+        }
     }
     file.close();
 
     std::cout << std::fixed << std::setprecision(1);
 
-    std::string line;
-    while (std::getline(std::cin, line)) {
-        if (line.empty()) continue;
-        std::istringstream iss(line);
+    std::string cmd_line;
+    while (std::getline(std::cin, cmd_line)) {
+        if (cmd_line.empty()) continue;
+        std::istringstream iss(cmd_line);
         std::string cmd;
         iss >> cmd;
 
         if (cmd == "AREA") {
             std::string sub;
             iss >> sub;
+
             if (sub == "EVEN") {
                 double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
-                                             [](double acc, const Polygon& p) { return p.points.size() % 2 == 0 ? acc + area(p) : acc; });
+                                             [](double acc, const Polygon& p) {
+                                                 return p.points.size() % 2 == 0 ? acc + area(p) : acc;
+                                             });
                 std::cout << sum << "\n";
-            } else if (sub == "ODD") {
+            }
+            else if (sub == "ODD") {
                 double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
-                                             [](double acc, const Polygon& p) { return p.points.size() % 2 != 0 ? acc + area(p) : acc; });
+                                             [](double acc, const Polygon& p) {
+                                                 return p.points.size() % 2 != 0 ? acc + area(p) : acc;
+                                             });
                 std::cout << sum << "\n";
-            } else if (sub == "MEAN") {
+            }
+            else if (sub == "MEAN") {
                 if (polygons.empty()) {
                     std::cout << "<INVALID COMMAND>\n";
                 } else {
@@ -55,14 +67,17 @@ int main(int argc, char* argv[]) {
                                                  [](double acc, const Polygon& p) { return acc + area(p); });
                     std::cout << sum / polygons.size() << "\n";
                 }
-            } else {
+            }
+            else {
                 try {
                     int n = std::stoi(sub);
                     if (n < 3) {
                         std::cout << "<INVALID COMMAND>\n";
                     } else {
                         double sum = std::accumulate(polygons.begin(), polygons.end(), 0.0,
-                                                     [n](double acc, const Polygon& p) { return p.points.size() == static_cast<size_t>(n) ? acc + area(p) : acc; });
+                                                     [n](double acc, const Polygon& p) {
+                                                         return p.points.size() == static_cast<size_t>(n) ? acc + area(p) : acc;
+                                                     });
                         std::cout << sum << "\n";
                     }
                 } catch (...) {
@@ -71,36 +86,45 @@ int main(int argc, char* argv[]) {
             }
         }
         else if (cmd == "MAX" || cmd == "MIN") {
-            std::string sub;
-            iss >> sub;
             if (polygons.empty()) {
                 std::cout << "<INVALID COMMAND>\n";
                 continue;
             }
+
+            std::string sub;
+            iss >> sub;
+
             if (sub == "AREA") {
                 auto cmp = [](const Polygon& a, const Polygon& b) { return area(a) < area(b); };
-                auto it = (cmd == "MAX") ? std::max_element(polygons.begin(), polygons.end(), cmp)
-                : std::min_element(polygons.begin(), polygons.end(), cmp);
+                auto it = (cmd == "MAX") ?
+                std::max_element(polygons.begin(), polygons.end(), cmp) :
+                std::min_element(polygons.begin(), polygons.end(), cmp);
                 std::cout << area(*it) << "\n";
-            } else if (sub == "VERTEXES") {
+            }
+            else if (sub == "VERTEXES") {
                 auto cmp = [](const Polygon& a, const Polygon& b) { return a.points.size() < b.points.size(); };
-                auto it = (cmd == "MAX") ? std::max_element(polygons.begin(), polygons.end(), cmp)
-                : std::min_element(polygons.begin(), polygons.end(), cmp);
+                auto it = (cmd == "MAX") ?
+                std::max_element(polygons.begin(), polygons.end(), cmp) :
+                std::min_element(polygons.begin(), polygons.end(), cmp);
                 std::cout << it->points.size() << "\n";
-            } else {
+            }
+            else {
                 std::cout << "<INVALID COMMAND>\n";
             }
         }
         else if (cmd == "COUNT") {
             std::string sub;
             iss >> sub;
+
             if (sub == "EVEN") {
                 std::cout << std::count_if(polygons.begin(), polygons.end(),
                                            [](const Polygon& p) { return p.points.size() % 2 == 0; }) << "\n";
-            } else if (sub == "ODD") {
+            }
+            else if (sub == "ODD") {
                 std::cout << std::count_if(polygons.begin(), polygons.end(),
                                            [](const Polygon& p) { return p.points.size() % 2 != 0; }) << "\n";
-            } else {
+            }
+            else {
                 try {
                     int n = std::stoi(sub);
                     if (n < 3) {
@@ -115,28 +139,38 @@ int main(int argc, char* argv[]) {
             }
         }
         else if (cmd == "RMECHO") {
-            Polygon target;
-            std::string target_str;
-            std::getline(iss >> std::ws, target_str);
+            std::string rest;
+            std::getline(iss >> std::ws, rest);
 
-            std::istringstream target_iss(target_str);
+            std::istringstream target_iss(rest);
+            Polygon target;
             if (!(target_iss >> target)) {
                 std::cout << "<INVALID COMMAND>\n";
                 continue;
             }
 
-            auto new_end = std::unique(polygons.begin(), polygons.end(),
-                                       [&](const Polygon& a, const Polygon& b) { return a == target && b == target; });
-            int removed = std::distance(new_end, polygons.end());
-            polygons.erase(new_end, polygons.end());
+            int removed = 0;
+            std::vector<Polygon> result;
+
+            for (size_t i = 0; i < polygons.size(); ++i) {
+                if (polygons[i] == target) {
+                    if (i + 1 < polygons.size() && polygons[i + 1] == target) {
+                        removed++;
+                        continue;
+                    }
+                }
+                result.push_back(polygons[i]);
+            }
+
+            polygons = std::move(result);
             std::cout << removed << "\n";
         }
         else if (cmd == "INFRAME") {
-            Polygon target;
-            std::string target_str;
-            std::getline(iss >> std::ws, target_str);
+            std::string rest;
+            std::getline(iss >> std::ws, rest);
 
-            std::istringstream target_iss(target_str);
+            std::istringstream target_iss(rest);
+            Polygon target;
             if (!(target_iss >> target)) {
                 std::cout << "<INVALID COMMAND>\n";
                 continue;
@@ -150,8 +184,8 @@ int main(int argc, char* argv[]) {
             int global_min_x = INT_MAX, global_max_x = INT_MIN;
             int global_min_y = INT_MAX, global_max_y = INT_MIN;
 
-            for (const auto& poly : polygons) {
-                for (const auto& pt : poly.points) {
+            for (const auto& p : polygons) {
+                for (const auto& pt : p.points) {
                     global_min_x = std::min(global_min_x, pt.x);
                     global_max_x = std::max(global_max_x, pt.x);
                     global_min_y = std::min(global_min_y, pt.y);
