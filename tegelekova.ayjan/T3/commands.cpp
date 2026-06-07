@@ -6,17 +6,15 @@
 #include <vector>
 #include <string>
 #include <cmath>
-#include <set> // для std::set
+#include <set>
 
 namespace tchervinsky
 {
-    // Вспомогательная функция для вывода double с точностью 1 знак
     static void printDouble(double value)
     {
         StreamGuard guard(std::cout);
         std::cout << std::fixed << std::setprecision(1) << value << std::endl;
     }
-
 
     void processCommand(std::vector<Polygon>& polygons, const std::string& line)
     {
@@ -26,7 +24,6 @@ namespace tchervinsky
 
         if (cmd == "AREA")
         {
-
             std::string param;
             iss >> param;
 
@@ -82,7 +79,6 @@ namespace tchervinsky
         }
         else if (cmd == "MAX")
         {
-
             std::string param;
             iss >> param;
 
@@ -115,7 +111,6 @@ namespace tchervinsky
         }
         else if (cmd == "MIN")
         {
-
             std::string param;
             iss >> param;
 
@@ -148,7 +143,6 @@ namespace tchervinsky
         }
         else if (cmd == "COUNT")
         {
-
             std::string param;
             iss >> param;
 
@@ -205,7 +199,7 @@ namespace tchervinsky
                 return;
             }
 
-            // --- ПРОВЕРКА НА ДУБЛИКАТЫ ТОЧЕК ---
+            // Проверка на дубликаты точек
             {
                 std::set<Point> uniquePoints(target.points.begin(), target.points.end());
                 if (uniquePoints.size() != target.points.size())
@@ -213,6 +207,15 @@ namespace tchervinsky
                     std::cout << "<INVALID COMMAND>" << std::endl;
                     return;
                 }
+            }
+
+            // Проверка на лишние символы после команды
+            std::string rest;
+            std::getline(iss, rest);
+            if (!rest.empty() && rest.find_first_not_of(" \t\n\r") != std::string::npos)
+            {
+                std::cout << "<INVALID COMMAND>" << std::endl;
+                return;
             }
 
             size_t addedCount = 0;
@@ -242,7 +245,7 @@ namespace tchervinsky
                 return;
             }
 
-            // --- ПРОВЕРКА НА ДУБЛИКАТЫ ТОЧЕК ---
+            // Проверка на дубликаты точек
             {
                 std::set<Point> uniquePoints(target.points.begin(), target.points.end());
                 if (uniquePoints.size() != target.points.size())
@@ -250,6 +253,14 @@ namespace tchervinsky
                     std::cout << "<INVALID COMMAND>" << std::endl;
                     return;
                 }
+            }
+
+            std::string rest;
+            std::getline(iss, rest);
+            if (!rest.empty() && rest.find_first_not_of(" \t\n\r") != std::string::npos)
+            {
+                std::cout << "<INVALID COMMAND>" << std::endl;
+                return;
             }
 
             if (polygons.empty())

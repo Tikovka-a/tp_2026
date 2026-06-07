@@ -32,9 +32,8 @@ int main(int argc, char* argv[])
         tchervinsky::Polygon p;
 
         if (iss >> p)
-        {
             polygons.push_back(p);
-        }
+        // если ошибка — просто пропускаем строку
     }
 
     while (std::getline(std::cin, line))
